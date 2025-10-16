@@ -1,0 +1,210 @@
+package outscalevault
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/hashicorp/vault/sdk/framework"
+	"github.com/hashicorp/vault/sdk/logical"
+	"github.com/outscale/osc-sdk-go/v3/pkg/iso8601"
+	"github.com/outscale/osc-sdk-go/v3/pkg/osc"
+)
+
+func pathCreds(b *backend) *framework.Path {
+	return &framework.Path{
+		Pattern: "creds/" + framework.GenericNameRegex("name"),
+		Fields: map[string]*framework.FieldSchema{
+			"name": {
+				Type:        framework.TypeLowerCaseString,
+				Description: "Name of the role",
+				Required:    true,
+			},
+		},
+		Callbacks: map[logical.Operation]framework.OperationFunc{
+			logical.ReadOperation:   b.pathCredsRead,
+			logical.UpdateOperation: b.pathCredsRead,
+		},
+		HelpSynopsis:    pathCredsHelpSynopsis,
+		HelpDescription: pathCredsHelpDescription,
+	}
+}
+
+func (b *backend) pathCredsRead(
+	ctx context.Context,
+	req *logical.Request,
+	d *framework.FieldData,
+) (*logical.Response, error) {
+	roleName := d.Get("name").(string)
+
+	roleEntry, err := b.getRole(ctx, req.Storage, roleName)
+	if err != nil {
+		return nil, fmt.Errorf("error retriving role: %w", err)
+	}
+
+	if roleEntry == nil {
+		return nil, errors.New("error retriving role: role is nil")
+	}
+
+	return b.createUserCreds(ctx, req, roleEntry, roleName)
+}
+
+func (b *backend) createUserCreds(
+	ctx context.Context,
+	req *logical.Request,
+	roleEntry *outscaleRoleEntry,
+	roleName string,
+) (*logical.Response, error) {
+	client, err := b.getClient(ctx, req.Storage)
+	if err != nil {
+		return nil, err
+	}
+
+	userName := "vault-user"
+
+	createUserResponse, err := client.CreateUser(ctx, osc.CreateUserRequest{
+		UserName: userName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating IEM user: %w", err)
+	}
+
+	for _, userGroupName := range roleEntry.UserGroupNames {
+		_, err := client.AddUserToUserGroup(ctx, osc.AddUserToUserGroupRequest{
+			UserName:      *createUserResponse.User.UserName,
+			UserGroupName: userGroupName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("errors adding user to group: %w", err)
+		}
+	}
+
+	createAccessKey, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{
+		UserName:       createUserResponse.User.UserName,
+		ExpirationDate: &iso8601.Time{Time: time.Now().Add(roleEntry.TTL)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error create AK/SK: %w", err)
+	}
+
+	var ttl time.Duration
+	if createAccessKey.AccessKey.ExpirationDate != nil {
+		ttl = time.Until(createAccessKey.AccessKey.ExpirationDate.Time)
+	}
+
+	resp := b.Secret(secretAccessKeyType).Response(map[string]interface{}{
+		"access_key": *createAccessKey.AccessKey.AccessKeyId,
+		"secret_key": *createAccessKey.AccessKey.SecretKey,
+	}, map[string]interface{}{
+		"username": userName,
+		"role":     roleName,
+	})
+
+	resp.Secret.TTL = ttl
+	if roleEntry.MaxTTL > 0 {
+		resp.Secret.MaxTTL = roleEntry.MaxTTL
+	}
+	resp.Secret.Renewable = false
+
+	return resp, nil
+}
+
+func secretAccessKeys(b *backend) *framework.Secret {
+	return &framework.Secret{
+		Type: secretAccessKeyType,
+		Fields: map[string]*framework.FieldSchema{
+			"access_key": {
+				Type:        framework.TypeString,
+				Description: "Access Key",
+			},
+			"secret_key": {
+				Type:        framework.TypeString,
+				Description: "Secret Key",
+			},
+		},
+		Revoke: b.secretAccessKeyRevoke,
+	}
+}
+
+func (b *backend) secretAccessKeyRevoke(
+	ctx context.Context,
+	req *logical.Request,
+	d *framework.FieldData,
+) (*logical.Response, error) {
+	// Get the username from the internal data
+	usernameRaw, ok := req.Secret.InternalData["username"]
+	if !ok {
+		return nil, fmt.Errorf("secret is missing username internal data")
+	}
+	username, ok := usernameRaw.(string)
+	if !ok {
+		return nil, fmt.Errorf("secret is missing username internal data")
+	}
+
+	client, err := b.getClient(ctx, req.Storage)
+	if err != nil {
+		return nil, err
+	}
+
+	readAccessKeysResponse, err := client.ReadAccessKeys(ctx, osc.ReadAccessKeysRequest{
+		UserName: &username,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error reading IEM user access keys: %w", err)
+	}
+
+	for _, accessKey := range *readAccessKeysResponse.AccessKeys {
+		_, err := client.UpdateAccessKey(ctx, osc.UpdateAccessKeyRequest{
+			AccessKeyId: *accessKey.AccessKeyId,
+			State:       "INACTIVE",
+			UserName:    &username,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error updating access key: %w", err)
+		}
+
+		_, err = client.DeleteAccessKey(ctx, osc.DeleteAccessKeyRequest{
+			AccessKeyId: *accessKey.AccessKeyId,
+			UserName:    &username,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error deleting access key: %w", err)
+		}
+	}
+
+	readUserGroupsPerUserResponse, err := client.ReadUserGroupsPerUser(
+		ctx,
+		osc.ReadUserGroupsPerUserRequest{
+			UserName: username,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error reading user groups per user: %w", err)
+	}
+
+	for _, userGroup := range *readUserGroupsPerUserResponse.UserGroups {
+		_, err := client.RemoveUserFromUserGroup(ctx, osc.RemoveUserFromUserGroupRequest{
+			UserGroupName: *userGroup.Name,
+			UserName:      username,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error removing user from user group: %w", err)
+		}
+	}
+
+	_, err = client.DeleteUser(ctx, osc.DeleteUserRequest{
+		UserName: username,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error deleting user: %w", err)
+	}
+
+	return nil, nil
+}
+
+const (
+	pathCredsHelpDescription = "pppp"
+	pathCredsHelpSynopsis    = "p"
+	secretAccessKeyType      = "access_keys"
+)
