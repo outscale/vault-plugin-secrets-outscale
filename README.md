@@ -2,10 +2,6 @@
 
 [![Project Stage](https://docs.outscale.com/fr/userguide/_images/Project-Sandbox-yellow.svg)](https://docs.outscale.com/en/userguide/Open-Source-Projects.html) [![](https://dcbadge.limes.pink/api/server/HUVtY5gT6s?style=flat&theme=default-inverted)](https://discord.gg/HUVtY5gT6s)
 
-<p align="center">
-  <img alt="<Project Logo or Icon>" src="<Logo URL or Placeholder>" width="100px">
-</p>
-
 ---
 
 ## 🌐 Links
@@ -67,6 +63,8 @@ vault plugin register -sha256=<hash of the binnary> secret vault-plugin-secrets-
 ### Example
 
 ```bash
+vault secrets enable -path=outscale vault-plugin-secrets-outscale
+
 vault write outscale/config access_key="$OSC_ACCESS_KEY" secret_key="$OSC_SECRET_KEY"
 vault read outscale/config
 
@@ -99,13 +97,3 @@ We welcome contributions!
 Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a pull request.
 
 ---
-
-### Notes for reuse:
-- Replace all `<...>` placeholders with your content.
-- You can prefill the `Project Stage` badge with values like:
-  - `Project-Incubating-blue.svg`
-  - `Project-Graduated-green.svg`
-- You may include platform-specific instructions (macOS/Linux/Windows) in collapsible `<details>` blocks if needed.
-
->Labels are centrally managed in the outscale/.github repository (labels.yml).
->This repo includes a workflow (.github/workflows/sync-labels.yml) that syncs labels from there.

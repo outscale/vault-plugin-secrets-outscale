@@ -10,16 +10,22 @@ import (
 )
 
 type outscaleRoleEntry struct {
-	UserGroupNames []string      `json:"user_group_names"`
-	TTL            time.Duration `json:"ttl"`
-	MaxTTL         time.Duration `json:"max_ttl"`
+	UserGroupNames    []string      `json:"user_group_names"`
+	TTL               time.Duration `json:"ttl"`
+	MaxTTL            time.Duration `json:"max_ttl"`
+	UserNameTemplate  string        `json:"user_name_template"`
+	UserEmailTemplate string        `json:"user_email_template"`
+	PathTemplate      string        `json:"path_template"`
 }
 
 func (r *outscaleRoleEntry) toResponseData() map[string]interface{} {
 	respData := map[string]interface{}{
-		"user_group_names": r.UserGroupNames,
-		"ttl":              r.TTL.Seconds(),
-		"max_ttl":          r.MaxTTL.Seconds(),
+		"user_group_names":    r.UserGroupNames,
+		"ttl":                 r.TTL.Seconds(),
+		"max_ttl":             r.MaxTTL.Seconds(),
+		"user_name_template":  r.UserNameTemplate,
+		"user_email_template": r.UserEmailTemplate,
+		"path_template":       r.PathTemplate,
 	}
 	return respData
 }
@@ -118,6 +124,23 @@ func (b *backend) pathRolesWrite(ctx context.Context,
 		return logical.ErrorResponse("user_group_names must to defined"), nil
 	}
 
+	user_name_template, ok := d.Get("user_name_template").(string)
+	if ok && len(user_name_template) > 0 {
+		roleEntry.UserNameTemplate = user_name_template
+	} else {
+		roleEntry.UserNameTemplate = "vault-user-{{random 20}}"
+	}
+
+	user_email_template, ok := d.Get("user_email_template").(string)
+	if ok {
+		roleEntry.UserEmailTemplate = user_email_template
+	}
+
+	path_template, ok := d.Get("path_template").(string)
+	if ok {
+		roleEntry.PathTemplate = path_template
+	}
+
 	if ttlRaw, ok := d.GetOk("ttl"); ok {
 		roleEntry.TTL = time.Duration(ttlRaw.(int)) * time.Second
 	} else if createOperation {
@@ -192,6 +215,18 @@ func pathRole(b *backend) []*framework.Path {
 					Type:        framework.TypeStringSlice,
 					Description: "Groups name the EIM should be associated with this role. The user groups are defined in the EIM.",
 					Required:    true,
+				},
+				"user_name_template": {
+					Type:        framework.TypeString,
+					Description: "User Name template for EIM user",
+				},
+				"user_email_template": {
+					Type:        framework.TypeString,
+					Description: "User email template for EIM user",
+				},
+				"path_template": {
+					Type:        framework.TypeString,
+					Description: "path template for EIM user",
 				},
 				"ttl": {
 					Type:        framework.TypeDurationSecond,

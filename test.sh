@@ -33,4 +33,4 @@ vault read outscale/roles/test
 sleep 1
 vault read outscale/creds/test
 
-sleep 3
+sleep 360
