@@ -29,14 +29,6 @@ func getConfig(ctx context.Context, s logical.Storage) (*profile.Profile, error)
 		return nil, fmt.Errorf("error reading root config: %w", err)
 	}
 
-	if config.Protocol == "" {
-		config.Protocol = "https"
-	}
-
-	if config.Region == "" {
-		config.Region = "eu-west-2"
-	}
-
 	return config, nil
 }
 
@@ -52,7 +44,10 @@ func (b *backend) pathConfigRead(
 
 	return &logical.Response{
 		Data: map[string]interface{}{
-			"region": config.Region,
+			"region":          config.Region,
+			"tls_skip_verify": config.TlsSkipVerify,
+			"endpoint":        config.Endpoints.API,
+			"protocol":        config.Protocol,
 		},
 	}, nil
 }
@@ -90,6 +85,22 @@ func (b *backend) pathConfigWrite(
 
 	if region, ok := data.GetOk("region"); ok {
 		config.Region = region.(string)
+	} else {
+		config.Region = "eu-west-2"
+	}
+
+	if tls_skip_verify, ok := data.GetOk("tls_skip_verify"); ok {
+		config.TlsSkipVerify = tls_skip_verify.(bool)
+	}
+
+	if endpoint, ok := data.GetOk("endpoint"); ok {
+		config.Endpoints.API = endpoint.(string)
+	}
+
+	if protocol, ok := data.GetOk("protocol"); ok {
+		config.Protocol = protocol.(string)
+	} else {
+		config.Protocol = "https"
 	}
 
 	entry, err := logical.StorageEntryJSON(configStoragePath, config)
@@ -147,6 +158,20 @@ func pathConfig(b *backend) *framework.Path {
 				Type:        framework.TypeString,
 				Description: "Outscale API region",
 				Default:     "eu-west-2",
+			},
+			"endpoint": {
+				Type:        framework.TypeString,
+				Description: "Outscale API Endpoint",
+			},
+			"tls_skip_verify": {
+				Type:        framework.TypeBool,
+				Description: "Skip TLS verification (NOT RECOMANDED)",
+				Default:     false,
+			},
+			"protocol": {
+				Type:        framework.TypeString,
+				Description: "Protocol used to connect to the API. Can be 'http' or 'https'",
+				Default:     "https",
 			},
 		},
 		Operations: map[logical.Operation]framework.OperationHandler{
