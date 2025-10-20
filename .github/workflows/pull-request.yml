@@ -20,11 +20,12 @@ jobs:
           go-version-file: './go.mod'
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
 
-  acc_tests:
+  tests:
+    name: Accaptence Tests
     environment: eu-west-2
     runs-on: ubuntu-24.04
     steps:
