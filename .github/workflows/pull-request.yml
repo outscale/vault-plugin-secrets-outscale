@@ -1,0 +1,45 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  acc_tests:
+    environment: eu-west-2
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+
+      - name: Run accaptence test
+        env:
+          VAULT_ACC: "1"
+          OSC_ACCESS_KEY: ${{ secrets.OSC_ACCESS_KEY }}
+          OSC_SECRET_KEY: ${{ secrets.OSC_SECRET_KEY }}
+          OSC_REGION: ${{ secrets.OSC_REGION }}
+        run: go test -v -timeout=60s -parallel=4 -count 1 ./...
