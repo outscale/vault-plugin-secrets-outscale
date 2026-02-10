@@ -44,12 +44,16 @@ func Backend() *backend {
 			[]*framework.Path{
 				pathCreds(&b),
 			},
+			[]*framework.Path{
+				pathConfigRotateRoot(&b),
+			},
 		),
 		Secrets: []*framework.Secret{
 			secretAccessKeys(&b),
 		},
-		BackendType: logical.TypeLogical,
-		Invalidate:  b.invalidate,
+		BackendType:      logical.TypeLogical,
+		Invalidate:       b.invalidate,
+		RotateCredential: b.rotateRootCredential,
 	}
 
 	return &b
