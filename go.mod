@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/vault-testing-stepwise v0.3.2
 	github.com/hashicorp/vault/api v1.21.0
 	github.com/hashicorp/vault/sdk v0.20.0
-	github.com/outscale/osc-sdk-go/v3 v3.0.0-alpha.6
+	github.com/outscale/osc-sdk-go/v3 v3.0.0-beta.4
 )
 
 require (
