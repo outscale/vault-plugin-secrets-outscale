@@ -34,22 +34,28 @@ func Backend() *backend {
 			SealWrapStorage: []string{
 				"config",
 				"role/*",
+				"root-role/*",
 			},
 		},
 		Paths: framework.PathAppend(
-			pathRole(&b),
+			pathUserRole(&b),
+			pathRootRole(&b),
 			[]*framework.Path{
 				pathConfig(&b),
 			},
 			[]*framework.Path{
-				pathCreds(&b),
+				pathConfigRotateRoot(&b),
 			},
 			[]*framework.Path{
-				pathConfigRotateRoot(&b),
+				pathUserCreds(&b),
+			},
+			[]*framework.Path{
+				pathRootCreds(&b),
 			},
 		),
 		Secrets: []*framework.Secret{
-			secretAccessKeys(&b),
+			secretUserAccessKeys(&b),
+			secretRootAccessKeys(&b),
 		},
 		BackendType:      logical.TypeLogical,
 		Invalidate:       b.invalidate,
@@ -103,5 +109,5 @@ func (b *backend) getClient(ctx context.Context, s logical.Storage) (*osc.Client
 }
 
 const backendHelp = `
-The Outsclae secretts backend is cool.
+The Outscale secrets backend is cool.
 `

@@ -18,8 +18,8 @@ type outscaleRoleEntry struct {
 	PathTemplate      string        `json:"path_template"`
 }
 
-func (r *outscaleRoleEntry) toResponseData() map[string]interface{} {
-	respData := map[string]interface{}{
+func (r *outscaleRoleEntry) toResponseData() map[string]any {
+	respData := map[string]any{
 		"user_group_names":    r.UserGroupNames,
 		"ttl":                 r.TTL.Seconds(),
 		"max_ttl":             r.MaxTTL.Seconds(),
@@ -128,7 +128,7 @@ func (b *backend) pathRolesWrite(ctx context.Context,
 	if ok && len(user_name_template) > 0 {
 		roleEntry.UserNameTemplate = user_name_template
 	} else {
-		roleEntry.UserNameTemplate = "vault-user-{{random 20}}"
+		roleEntry.UserNameTemplate = "vault-user-{{random 20}}" // ?
 	}
 
 	user_email_template, ok := d.Get("user_email_template").(string)
@@ -170,7 +170,7 @@ func (b *backend) pathRolesDelete(
 ) (*logical.Response, error) {
 	err := req.Storage.Delete(ctx, "roles/"+d.Get("name").(string))
 	if err != nil {
-		return nil, fmt.Errorf("error deleting hashiCups role: %w", err)
+		return nil, fmt.Errorf("error deleting role: %w", err)
 	}
 
 	return nil, nil
@@ -181,7 +181,7 @@ func (b *backend) pathRolesList(
 	req *logical.Request,
 	d *framework.FieldData,
 ) (*logical.Response, error) {
-	entries, err := req.Storage.List(ctx, "role/")
+	entries, err := req.Storage.List(ctx, "roles/")
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (b *backend) pathRolesExistenceCheck(ctx context.Context,
 	return out != nil, nil
 }
 
-func pathRole(b *backend) []*framework.Path {
+func pathUserRole(b *backend) []*framework.Path {
 	return []*framework.Path{
 		{
 			Pattern: "roles/" + framework.GenericNameWithAtRegex("name"),
@@ -251,8 +251,8 @@ func pathRole(b *backend) []*framework.Path {
 					Callback: b.pathRolesDelete,
 				},
 			},
-			HelpSynopsis:    pathRoleHelpSynopsis,
-			HelpDescription: pathRoleHelpDescription,
+			HelpSynopsis:    pathUserRoleHelpSynopsis,
+			HelpDescription: pathUserRoleHelpDescription,
 			ExistenceCheck:  b.pathRolesExistenceCheck,
 		},
 		{
@@ -262,15 +262,15 @@ func pathRole(b *backend) []*framework.Path {
 					Callback: b.pathRolesList,
 				},
 			},
-			HelpSynopsis:    pathRoleListHelpSynopsis,
-			HelpDescription: pathRoleListHelpDescription,
+			HelpSynopsis:    pathUserRoleListHelpSynopsis,
+			HelpDescription: pathUserRoleListHelpDescription,
 		},
 	}
 }
 
 const (
-	pathRoleHelpSynopsis        = "a"
-	pathRoleHelpDescription     = "aaaa"
-	pathRoleListHelpSynopsis    = "b"
-	pathRoleListHelpDescription = "bbbb"
+	pathUserRoleHelpSynopsis        = "a"
+	pathUserRoleHelpDescription     = "aaaa"
+	pathUserRoleListHelpSynopsis    = "b"
+	pathUserRoleListHelpDescription = "bbbb"
 )

@@ -42,7 +42,7 @@ func (b *backend) pathConfigRotateRootUpdate(
 }
 
 func (b *backend) rotateRootCredential(ctx context.Context, req *logical.Request) error {
-	// Make Sur we have a client available before locking the state
+	// Make sure we have a client available before locking the state
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
 		return err

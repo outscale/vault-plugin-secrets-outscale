@@ -63,19 +63,65 @@ vault plugin register -sha256=<hash of the binnary> secret vault-plugin-secrets-
 ### Example
 
 ```bash
-vault secrets enable -path=outscale vault-plugin-secrets-outscale
+# Enable the plugin
+vault secrets enable -path=outscale -plugin-name=vault-plugin-secrets-outscale plugin
 
-vault write outscale/config access_key="$OSC_ACCESS_KEY" secret_key="$OSC_SECRET_KEY"
+# Configure credentials
+vault write outscale/config \
+    access_key="$OSC_ACCESS_KEY" \
+    secret_key="$OSC_SECRET_KEY" \
+    region="eu-west-2"
+
 vault read outscale/config
-
-vault write outscale/roles/<role name> user_group_names="<group name>" max_ttl=1d ttl=10m
-vault read outscale/roles/<role name>
 ```
 
 ### Usage
 
+#### User Roles
+
 ```bash
-vault read outscale/creds/<role name>
+# Create a user role
+vault write outscale/roles/<role-name> user_group_names="<group-name>" ttl=1h max_ttl=24h
+
+# List user roles
+vault list outscale/roles
+
+# Read user role
+vault read outscale/roles/<role-name>
+
+# Delete user role
+vault delete outscale/roles/<role-name>
+
+# Generate credentials
+vault read outscale/creds/<role-name>
+```
+
+#### Root Roles
+
+```bash
+# Create a root role
+vault write outscale/root-role/<role-name> ttl=1h
+
+# List root roles
+vault list outscale/root-role
+
+# Read root role
+vault read outscale/root-role/<role-name>
+
+# Delete root role
+vault delete outscale/root-role/<role-name>
+
+# Generate credentials with rool-role TTL
+vault read outscale/root-creds/<role-name>
+
+# Generate credentials with specific TTL
+vault read outscale/root-creds/<role-name> ttl=10min
+```
+
+#### Rotate Root Credentials
+
+```bash
+vault write outscale/config/rotate-root
 ```
 
 ---

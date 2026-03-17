@@ -13,7 +13,7 @@ import (
 	"github.com/outscale/osc-sdk-go/v3/pkg/osc"
 )
 
-func pathCreds(b *backend) *framework.Path {
+func pathUserCreds(b *backend) *framework.Path {
 	return &framework.Path{
 		Pattern: "creds/" + framework.GenericNameRegex("name"),
 		Fields: map[string]*framework.FieldSchema{
@@ -24,15 +24,15 @@ func pathCreds(b *backend) *framework.Path {
 			},
 		},
 		Callbacks: map[logical.Operation]framework.OperationFunc{
-			logical.ReadOperation:   b.pathCredsRead,
-			logical.UpdateOperation: b.pathCredsRead,
+			logical.ReadOperation:   b.pathUserCredsRead,
+			logical.UpdateOperation: b.pathUserCredsRead,
 		},
-		HelpSynopsis:    pathCredsHelpSynopsis,
-		HelpDescription: pathCredsHelpDescription,
+		HelpSynopsis:    pathUserCredsHelpSynopsis,
+		HelpDescription: pathUserCredsHelpDescription,
 	}
 }
 
-func (b *backend) pathCredsRead(
+func (b *backend) pathUserCredsRead(
 	ctx context.Context,
 	req *logical.Request,
 	d *framework.FieldData,
@@ -116,16 +116,18 @@ func (b *backend) createUserCreds(
 			UserGroupName: userGroupName,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("errors adding user to group: %w", err)
+			return nil, fmt.Errorf("error adding user to group: %w", err)
 		}
 	}
 
+	tag := fmt.Sprintf("vault:creds/%s", roleName)
 	createAccessKey, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{
 		UserName:       createUserResponse.User.UserName,
 		ExpirationDate: &iso8601.Time{Time: time.Now().Add(roleEntry.TTL)},
+		Tag:            &tag,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error create AK/SK: %w", err)
+		return nil, fmt.Errorf("error creating AK/SK: %w", err)
 	}
 
 	var ttl time.Duration
@@ -133,11 +135,11 @@ func (b *backend) createUserCreds(
 		ttl = time.Until(createAccessKey.AccessKey.ExpirationDate.Time)
 	}
 
-	resp := b.Secret(secretAccessKeyType).Response(map[string]interface{}{
+	resp := b.Secret(secretUserAccessKeyType).Response(map[string]any{
 		"access_key": *createAccessKey.AccessKey.AccessKeyId,
 		"secret_key": *createAccessKey.AccessKey.SecretKey,
-	}, map[string]interface{}{
-		"username": createUserRequest.UserName,
+	}, map[string]any{
+		"username": *createUserResponse.User.UserName,
 		"role":     roleName,
 	})
 
@@ -150,9 +152,9 @@ func (b *backend) createUserCreds(
 	return resp, nil
 }
 
-func secretAccessKeys(b *backend) *framework.Secret {
+func secretUserAccessKeys(b *backend) *framework.Secret {
 	return &framework.Secret{
-		Type: secretAccessKeyType,
+		Type: secretUserAccessKeyType,
 		Fields: map[string]*framework.FieldSchema{
 			"access_key": {
 				Type:        framework.TypeString,
@@ -163,11 +165,11 @@ func secretAccessKeys(b *backend) *framework.Secret {
 				Description: "Secret Key",
 			},
 		},
-		Revoke: b.secretAccessKeyRevoke,
+		Revoke: b.secretUserAccessKeyRevoke,
 	}
 }
 
-func (b *backend) secretAccessKeyRevoke(
+func (b *backend) secretUserAccessKeyRevoke(
 	ctx context.Context,
 	req *logical.Request,
 	d *framework.FieldData,
@@ -244,7 +246,7 @@ func (b *backend) secretAccessKeyRevoke(
 }
 
 const (
-	pathCredsHelpDescription = "pppp"
-	pathCredsHelpSynopsis    = "p"
-	secretAccessKeyType      = "access_keys"
+	pathUserCredsHelpDescription = ""
+	pathUserCredsHelpSynopsis    = ""
+	secretUserAccessKeyType      = "user_access_keys"
 )
