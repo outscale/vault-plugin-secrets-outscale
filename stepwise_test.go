@@ -12,13 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var runAcceptanceTests = os.Getenv("VAULT_ACC") == "1"
-
 func TestAcc(t *testing.T) {
 	t.Parallel()
-	if !runAcceptanceTests {
-		t.SkipNow()
-	}
 
 	envOptions := &stepwise.MountOptions{
 		RegistryName:    "outscale",
@@ -46,8 +41,11 @@ func TestAcc(t *testing.T) {
 var initSetup sync.Once
 
 func testAccPreCheck(t *testing.T) {
+	if os.Getenv("VAULT_ACC") != "1" {
+		t.Skip("Acceptance tests skipped unless VAULT_ACC=1 is set")
+	}
+
 	initSetup.Do(func() {
-		// Ensure test variables are set
 		if v := os.Getenv("OSC_SECRET_KEY"); v == "" {
 			t.Skip(fmt.Printf("%s not set", "OSC_SECRET_KEY"))
 		}
@@ -64,7 +62,7 @@ func testAccConfig(t *testing.T) stepwise.Step {
 	return stepwise.Step{
 		Operation: stepwise.UpdateOperation,
 		Path:      "config",
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"access_key": os.Getenv("OSC_ACCESS_KEY"),
 			"secret_key": os.Getenv("OSC_SECRET_KEY"),
 			"region":     os.Getenv("OSC_REGION"),
@@ -76,7 +74,7 @@ func testAccUserRole(t *testing.T, roleName string) stepwise.Step {
 	return stepwise.Step{
 		Operation: stepwise.UpdateOperation,
 		Path:      "roles/" + roleName,
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"ttl":     "1m",
 			"max_ttl": "5m",
 		},

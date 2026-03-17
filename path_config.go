@@ -42,8 +42,12 @@ func (b *backend) pathConfigRead(
 		return nil, err
 	}
 
+	if config == nil {
+		return nil, nil
+	}
+
 	return &logical.Response{
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"region":          config.Region,
 			"tls_skip_verify": config.TlsSkipVerify,
 			"endpoint":        config.Endpoints.API,
@@ -83,12 +87,6 @@ func (b *backend) pathConfigWrite(
 		return nil, fmt.Errorf("missing secret_key in configuration")
 	}
 
-	if region, ok := data.GetOk("region"); ok {
-		config.Region = region.(string)
-	} else {
-		config.Region = "eu-west-2"
-	}
-
 	if tls_skip_verify, ok := data.GetOk("tls_skip_verify"); ok {
 		config.TlsSkipVerify = tls_skip_verify.(bool)
 	}
@@ -97,11 +95,8 @@ func (b *backend) pathConfigWrite(
 		config.Endpoints.API = endpoint.(string)
 	}
 
-	if protocol, ok := data.GetOk("protocol"); ok {
-		config.Protocol = protocol.(string)
-	} else {
-		config.Protocol = "https"
-	}
+	config.Region = data.Get("region").(string)
+	config.Protocol = data.Get("protocol").(string)
 
 	entry, err := logical.StorageEntryJSON(configStoragePath, config)
 	if err != nil {
@@ -165,7 +160,7 @@ func pathConfig(b *backend) *framework.Path {
 			},
 			"tls_skip_verify": {
 				Type:        framework.TypeBool,
-				Description: "Skip TLS verification (NOT RECOMANDED)",
+				Description: "Skip TLS verification (NOT RECOMMENDED)",
 				Default:     false,
 			},
 			"protocol": {
