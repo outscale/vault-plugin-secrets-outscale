@@ -1,4 +1,4 @@
-name: Lint
+name: Tests
 
 on:
   push:
@@ -25,19 +25,25 @@ jobs:
           version: latest
 
   tests:
-    name: Accaptence Tests
+    name: Acceptance Tests
     environment: eu-west-2
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v5
 
+      - uses: outscale/frieza-github-actions/frieza-clean@master
+        with:
+            access_key: ${{ secrets.OSC_ACCESS_KEY }}
+            secret_key: ${{ secrets.OSC_SECRET_KEY }}
+            region: ${{ secrets.OSC_REGION }}
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: './go.mod'
 
-      - name: Run accaptence test
+      - name: Run acceptance tests
         env:
           VAULT_ACC: "1"
           OSC_ACCESS_KEY: ${{ secrets.OSC_ACCESS_KEY }}
