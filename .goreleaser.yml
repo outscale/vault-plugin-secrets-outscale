@@ -1,6 +1,9 @@
+version: 2
+
 before:
   hooks:
     - go mod tidy
+
 builds:
 - env:
     - CGO_ENABLED=0
@@ -24,14 +27,18 @@ builds:
       goarch: '386'
     - goos: linux
       goarch: '386'
-  binary: '{{ .ProjectName }}_v{{ .Version }}'
+  main: ./cmd/vault-plugin-secrets-outscale/main.go
+
 archives:
 - format: zip
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+
 checksum:
   name_template: "checksums.txt"
   algorithm: sha256
+
 release:
   draft: true
+
 changelog:
   use: github
