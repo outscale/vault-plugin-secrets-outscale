@@ -2,15 +2,23 @@ package outscalevault
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
 	"github.com/outscale/osc-sdk-go/v3/pkg/osc"
 )
 
+const (
+	pathConfigRotateRootHelpDesc = "This endpoint rotates the access_key. This operation is irreversible and should be used with extreme caution."
+	pathConfigRotateRootHelpSyn  = "Rotate the root access_key."
+
+	pathConfigRotateRootPattern = "config/rotate-root"
+)
+
 func pathConfigRotateRoot(b *backend) *framework.Path {
 	return &framework.Path{
-		Pattern: "config/rotate-root",
+		Pattern: pathConfigRotateRootPattern,
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.UpdateOperation: &framework.PathOperation{
 				Callback:                    b.pathConfigRotateRootUpdate,
@@ -22,11 +30,6 @@ func pathConfigRotateRoot(b *backend) *framework.Path {
 		HelpDescription: pathConfigRotateRootHelpDesc,
 	}
 }
-
-const (
-	pathConfigRotateRootHelpDesc = "This endpoint rotates the access_key. This operation is irreversible and should be used with extreme caution."
-	pathConfigRotateRootHelpSyn  = "Rotate the root access_key."
-)
 
 func (b *backend) pathConfigRotateRootUpdate(
 	ctx context.Context,
@@ -42,21 +45,30 @@ func (b *backend) pathConfigRotateRootUpdate(
 }
 
 func (b *backend) rotateRootCredential(ctx context.Context, req *logical.Request) error {
-	// Make sure we have a client available before locking the state
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	return b.rotateRootCredentialLocked(ctx, req)
+}
+
+func (b *backend) rotateRootCredentialLocked(ctx context.Context, req *logical.Request) error {
+	cfg, err := getConfig(ctx, req.Storage)
+	if err != nil {
+		return err
+	}
+	if cfg == nil {
+		return errors.New(pathConfigRotateRootPattern + ": root credentials configuration is not set")
+	}
+
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
 		return err
 	}
 
-	b.lock.Lock()
-	defer b.lock.Unlock()
-
-	cfg, err := getConfig(ctx, req.Storage)
-	if err != nil {
-		return err
-	}
-
-	createAkSk, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{})
+	tag := "vault:" + pathConfigRotateRootPattern
+	createAkSk, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{
+		Tag: &tag,
+	})
 	if err != nil {
 		return err
 	}
@@ -70,13 +82,6 @@ func (b *backend) rotateRootCredential(ctx context.Context, req *logical.Request
 		return err
 	}
 
-	_, err = newClient.DeleteAccessKey(ctx, osc.DeleteAccessKeyRequest{
-		AccessKeyId: oldAccessKey,
-	})
-	if err != nil {
-		return nil
-	}
-
 	entry, err := logical.StorageEntryJSON(configStoragePath, cfg)
 	if err != nil {
 		return err
@@ -86,7 +91,16 @@ func (b *backend) rotateRootCredential(ctx context.Context, req *logical.Request
 		return err
 	}
 
-	b.client = newClient
+	_, err = newClient.DeleteAccessKey(ctx, osc.DeleteAccessKeyRequest{
+		AccessKeyId: oldAccessKey,
+	})
+	if err != nil {
+		b.Logger().Warn(
+			pathConfigRotateRootPattern + ": failed to delete old root access key (" + oldAccessKey + "). Error: " + err.Error(),
+		)
+	}
+
+	b.setClient(newClient)
 
 	return nil
 }

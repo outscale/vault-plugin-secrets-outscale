@@ -66,6 +66,9 @@ func (b *backend) createRootCreds(
 	roleName string,
 	ttlOverride time.Duration,
 ) (*logical.Response, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
 		return nil, err
@@ -131,6 +134,9 @@ func (b *backend) secretRootAccessKeyRevoke(
 	if !ok {
 		return nil, fmt.Errorf("secret is missing username internal data")
 	}
+
+	b.lock.RLock()
+	defer b.lock.RUnlock()
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {

@@ -124,6 +124,23 @@ vault read outscale/root-creds/<role-name> ttl=10min
 vault write outscale/config/rotate-root
 ```
 
+#### Automatic Root Credential Rotation
+
+```bash
+# Enable root credentials rotation. By default, rotates every 30 days
+vault write outscale/config/rotation \
+    enabled=true
+
+# Rotate root credentials every 24 hours
+vault write outscale/config/rotation \
+    period=24h
+
+vault read outscale/config/rotation
+
+# Disable credentials rotation
+vault write outscale/config/rotation enabled=false
+```
+
 ---
 
 ## 📜 License

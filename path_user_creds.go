@@ -57,6 +57,9 @@ func (b *backend) createUserCreds(
 	roleEntry *outscaleRoleEntry,
 	roleName string,
 ) (*logical.Response, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
 		return nil, err
@@ -183,6 +186,9 @@ func (b *backend) secretUserAccessKeyRevoke(
 	if !ok {
 		return nil, fmt.Errorf("secret is missing username internal data")
 	}
+
+	b.lock.RLock()
+	defer b.lock.RUnlock()
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {

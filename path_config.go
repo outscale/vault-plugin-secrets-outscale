@@ -61,6 +61,9 @@ func (b *backend) pathConfigWrite(
 	req *logical.Request,
 	data *framework.FieldData,
 ) (*logical.Response, error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	config, err := getConfig(ctx, req.Storage)
 	if err != nil {
 		return nil, err
@@ -117,6 +120,9 @@ func (b *backend) pathConfigDelete(
 	req *logical.Request,
 	data *framework.FieldData,
 ) (*logical.Response, error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	err := req.Storage.Delete(ctx, configStoragePath)
 
 	if err == nil {
