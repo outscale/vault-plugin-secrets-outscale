@@ -11,17 +11,18 @@ func TestUserCreds(t *testing.T) {
 	b, s := getTestBackend(t)
 
 	t.Run("Read creds without role fails", func(t *testing.T) {
-		_, err := b.HandleRequest(t.Context(), &logical.Request{
+		resp, err := b.HandleRequest(t.Context(), &logical.Request{
 			Operation: logical.ReadOperation,
 			Path:      "creds/nonexistent",
 			Storage:   s,
 		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "role is nil")
+		require.NoError(t, err)
+		require.True(t, resp.IsError())
+		require.Contains(t, resp.Error().Error(), "role \"nonexistent\" does not exist")
 	})
 }
 
-func TestUserCredsWithRole(t *testing.T) {
+func TestAccUserCredsWithRole(t *testing.T) {
 	if !runAcceptanceTests {
 		t.Skip("Acceptance tests skipped unless VAULT_ACC=1 is set")
 	}

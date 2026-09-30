@@ -2,7 +2,6 @@ package outscalevault
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -48,7 +47,7 @@ func (b *backend) pathRootCredsRead(
 	}
 
 	if roleEntry == nil {
-		return nil, errors.New("error retriving role: role is nil")
+		return logical.ErrorResponse("root role %q does not exist", roleName), nil
 	}
 
 	var ttl time.Duration
@@ -71,7 +70,7 @@ func (b *backend) createRootCreds(
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
-		return nil, err
+		return b.responseFromErr("creating root credentials", err)
 	}
 
 	ttl := roleEntry.TTL
@@ -86,7 +85,7 @@ func (b *backend) createRootCreds(
 		Tag:            &tag,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating ak/sk: %w", err)
+		return b.responseFromErr("creating root credentials", err)
 	}
 
 	resp := b.Secret(secretRootAccessKeyType).Response(map[string]any{
@@ -140,7 +139,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
-		return nil, err
+		return b.responseFromErr("revoking root credentials", err)
 	}
 
 	_, err = client.UpdateAccessKey(ctx, osc.UpdateAccessKeyRequest{
@@ -152,7 +151,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 		case osc.HasErrorCode(err, []string{"5076", "5099", "4000"}):
 		// AK expired or already deleted
 		default:
-			return nil, fmt.Errorf("error updating access key: %w", err)
+			return b.responseFromErr("deactivating root credentials", err)
 		}
 	}
 
@@ -164,7 +163,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 		case osc.HasErrorCode(err, []string{"5076", "5099", "4000"}):
 		// AK expired or already deleted
 		default:
-			return nil, fmt.Errorf("error deleting access key: %w", err)
+			return b.responseFromErr("deleting root credentials", err)
 		}
 	}
 

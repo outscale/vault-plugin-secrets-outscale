@@ -2,7 +2,6 @@ package outscalevault
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
@@ -38,10 +37,10 @@ func (b *backend) pathConfigRotateRootUpdate(
 ) (*logical.Response, error) {
 	err := b.rotateRootCredential(ctx, req)
 	if err != nil {
-		b.Logger().Error("failed to rotate root credential", "error", err)
+		return b.responseFromErr("rotating root credentials", err)
 	}
 
-	return nil, err
+	return nil, nil
 }
 
 func (b *backend) rotateRootCredential(ctx context.Context, req *logical.Request) error {
@@ -55,9 +54,6 @@ func (b *backend) rotateRootCredentialLocked(ctx context.Context, req *logical.R
 	cfg, err := getConfig(ctx, req.Storage)
 	if err != nil {
 		return err
-	}
-	if cfg == nil {
-		return errors.New(pathConfigRotateRootPattern + ": root credentials configuration is not set")
 	}
 
 	client, err := b.getClient(ctx, req.Storage)

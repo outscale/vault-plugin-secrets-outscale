@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAcc(t *testing.T) {
+func TestStepwise(t *testing.T) {
 	t.Parallel()
 
 	envOptions := &stepwise.MountOptions{
