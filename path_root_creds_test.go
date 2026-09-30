@@ -11,17 +11,18 @@ func TestRootCreds(t *testing.T) {
 	b, s := getTestBackend(t)
 
 	t.Run("Read root creds without role fails", func(t *testing.T) {
-		_, err := b.HandleRequest(t.Context(), &logical.Request{
+		resp, err := b.HandleRequest(t.Context(), &logical.Request{
 			Operation: logical.ReadOperation,
 			Path:      "root-creds/nonexistent",
 			Storage:   s,
 		})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "role is nil")
+		require.NoError(t, err)
+		require.True(t, resp.IsError())
+		require.Contains(t, resp.Error().Error(), "root role \"nonexistent\" does not exist")
 	})
 }
 
-func TestRootCredsWithRole(t *testing.T) {
+func TestAccRootCredsWithRole(t *testing.T) {
 	if !runAcceptanceTests {
 		t.Skip("Acceptance tests skipped unless VAULT_ACC=1 is set")
 	}

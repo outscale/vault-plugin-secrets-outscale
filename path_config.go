@@ -14,6 +14,8 @@ const (
 	configStoragePath = "config"
 )
 
+var errConfigNotSet = errors.New("root credentials configuration is not set")
+
 func getConfig(ctx context.Context, s logical.Storage) (*profile.Profile, error) {
 	entry, err := s.Get(ctx, configStoragePath)
 	if err != nil {
@@ -73,7 +75,7 @@ func (b *backend) pathConfigWrite(
 
 	if config == nil {
 		if !createOperation {
-			return nil, errors.New("config not found during update operation")
+			return logical.ErrorResponse("config not found during update operation"), nil
 		}
 		config = new(profile.Profile)
 	}
@@ -81,13 +83,13 @@ func (b *backend) pathConfigWrite(
 	if access_key, ok := data.GetOk("access_key"); ok {
 		config.AccessKey = access_key.(string)
 	} else if !ok && createOperation {
-		return nil, fmt.Errorf("missing access_key in configuration")
+		return logical.ErrorResponse("missing access_key in configuration"), nil
 	}
 
 	if secret_key, ok := data.GetOk("secret_key"); ok {
 		config.SecretKey = secret_key.(string)
 	} else if !ok && createOperation {
-		return nil, fmt.Errorf("missing secret_key in configuration")
+		return logical.ErrorResponse("missing secret_key in configuration"), nil
 	}
 
 	if tls_skip_verify, ok := data.GetOk("tls_skip_verify"); ok {
