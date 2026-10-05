@@ -30,7 +30,7 @@ builds:
   main: ./cmd/vault-plugin-secrets-outscale/main.go
 
 archives:
-- format: zip
+- formats: [zip]
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 
 checksum:
