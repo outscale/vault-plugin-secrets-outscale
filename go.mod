@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/vault-testing-stepwise v0.3.2
-	github.com/hashicorp/vault/api v1.21.0
+	github.com/hashicorp/vault/api v1.23.0
 	github.com/hashicorp/vault/sdk v0.20.0
 	github.com/outscale/osc-sdk-go/v3 v3.0.0-beta.4.0.20260317144200-8238d9279533
 	github.com/stretchr/testify v1.11.1
@@ -112,11 +112,11 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
-	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.32.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/api v0.254.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
