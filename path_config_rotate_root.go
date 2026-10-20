@@ -9,10 +9,9 @@ import (
 )
 
 const (
-	pathConfigRotateRootHelpDesc = "This endpoint rotates the access_key. This operation is irreversible and should be used with extreme caution."
-	pathConfigRotateRootHelpSyn  = "Rotate the root access_key."
-
-	pathConfigRotateRootPattern = "config/rotate-root"
+	pathConfigRotateRootHelpDesc = "Rotates the plugin configuration access key. The previous access key cannot be restored after rotation."
+	pathConfigRotateRootHelpSyn  = "Rotate the plugin configuration access key."
+	pathConfigRotateRootPattern  = "config/rotate-root"
 )
 
 func pathConfigRotateRoot(b *backend) *framework.Path {
@@ -37,7 +36,7 @@ func (b *backend) pathConfigRotateRootUpdate(
 ) (*logical.Response, error) {
 	err := b.rotateRootCredential(ctx, req)
 	if err != nil {
-		return b.responseFromErr("rotating root credentials", err)
+		return b.responseFromErr("rotating the plugin configuration access key", err)
 	}
 
 	return nil, nil
@@ -92,7 +91,7 @@ func (b *backend) rotateRootCredentialLocked(ctx context.Context, req *logical.R
 	})
 	if err != nil {
 		b.Logger().Warn(
-			pathConfigRotateRootPattern + ": failed to delete old root access key (" + oldAccessKey + "). Error: " + err.Error(),
+			pathConfigRotateRootPattern + ": failed to delete old plugin configuration access key (" + oldAccessKey + "). Error: " + err.Error(),
 		)
 	}
 

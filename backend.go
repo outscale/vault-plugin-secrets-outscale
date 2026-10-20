@@ -117,5 +117,15 @@ func (b *backend) setClient(client *osc.Client) {
 }
 
 const backendHelp = `
-The Outscale secrets backend is cool.
+The OUTSCALE secrets engine generates leased OUTSCALE access keys.
+
+It can generate access keys for two types of identities:
+
+- EIM user access keys: creates a temporary EIM user and an access key
+  belonging to that user.
+- Root user access keys: creates an access key belonging to the
+  OUTSCALE root user.
+
+The plugin requires an existing root user access key at "config" to call the
+OUTSCALE API.
 `

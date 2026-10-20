@@ -18,7 +18,7 @@ func pathUserCreds(b *backend) *framework.Path {
 		Fields: map[string]*framework.FieldSchema{
 			"name": {
 				Type:        framework.TypeLowerCaseString,
-				Description: "Name of the role",
+				Description: "Name of the user role used to generate the EIM user access key.",
 				Required:    true,
 			},
 		},
@@ -61,7 +61,7 @@ func (b *backend) createUserCreds(
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
-		return b.responseFromErr("creating EIM user credentials", err)
+		return b.responseFromErr("creating an EIM user access key", err)
 	}
 
 	createUserRequest := osc.CreateUserRequest{}
@@ -129,7 +129,7 @@ func (b *backend) createUserCreds(
 		Tag:            &tag,
 	})
 	if err != nil {
-		return b.responseFromErr("creating EIM user credentials", err)
+		return b.responseFromErr("creating an EIM user access key", err)
 	}
 
 	var ttl time.Duration
@@ -160,11 +160,11 @@ func secretUserAccessKeys(b *backend) *framework.Secret {
 		Fields: map[string]*framework.FieldSchema{
 			"access_key": {
 				Type:        framework.TypeString,
-				Description: "Access Key",
+				Description: "Access key.",
 			},
 			"secret_key": {
 				Type:        framework.TypeString,
-				Description: "Secret Key",
+				Description: "Secret key.",
 			},
 		},
 		Revoke: b.secretUserAccessKeyRevoke,
@@ -191,7 +191,7 @@ func (b *backend) secretUserAccessKeyRevoke(
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
-		return b.responseFromErr("revoking EIM user credentials", err)
+		return b.responseFromErr("revoking an EIM user access key", err)
 	}
 
 	readAccessKeysResponse, err := client.ReadAccessKeys(ctx, osc.ReadAccessKeysRequest{
@@ -251,7 +251,7 @@ func (b *backend) secretUserAccessKeyRevoke(
 }
 
 const (
-	pathUserCredsHelpDescription = ""
-	pathUserCredsHelpSynopsis    = ""
+	pathUserCredsHelpDescription = `Creates a temporary EIM user and a leased access key owned by that user.`
+	pathUserCredsHelpSynopsis    = "Generate an EIM user access key." //nolint:gosec
 	secretUserAccessKeyType      = "user_access_keys"
 )

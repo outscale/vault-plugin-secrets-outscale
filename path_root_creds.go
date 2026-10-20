@@ -17,12 +17,12 @@ func pathRootCreds(b *backend) *framework.Path {
 		Fields: map[string]*framework.FieldSchema{
 			"name": {
 				Type:        framework.TypeLowerCaseString,
-				Description: "Name of the role",
+				Description: "Name of the root role used to generate the root user access key.",
 				Required:    true,
 			},
 			"ttl": {
 				Type:        framework.TypeDurationSecond,
-				Description: "TTL for the generated secret. If not set, uses the role's TTL.",
+				Description: "Lease duration for the root user access key. If omitted, the root role's TTL is used.",
 			},
 		},
 		Callbacks: map[logical.Operation]framework.OperationFunc{
@@ -70,7 +70,7 @@ func (b *backend) createRootCreds(
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
-		return b.responseFromErr("creating root credentials", err)
+		return b.responseFromErr("creating root user access key", err)
 	}
 
 	ttl := roleEntry.TTL
@@ -79,13 +79,13 @@ func (b *backend) createRootCreds(
 	}
 
 	tag := fmt.Sprintf("vault:root-creds/%s", roleName)
-	// Expiration date is set to TTL + 1 minute to let Vault revoke the credential before expiration
+	// Expiration date is set to TTL + 1 minute to let Vault revoke the access key before expiration
 	createAccessKey, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{
 		ExpirationDate: &iso8601.Time{Time: time.Now().Add(ttl).Add(time.Minute)},
 		Tag:            &tag,
 	})
 	if err != nil {
-		return b.responseFromErr("creating root credentials", err)
+		return b.responseFromErr("creating root user access key", err)
 	}
 
 	resp := b.Secret(secretRootAccessKeyType).Response(map[string]any{
@@ -108,11 +108,11 @@ func secretRootAccessKeys(b *backend) *framework.Secret {
 		Fields: map[string]*framework.FieldSchema{
 			"access_key": {
 				Type:        framework.TypeString,
-				Description: "Access Key",
+				Description: "Access key.",
 			},
 			"secret_key": {
 				Type:        framework.TypeString,
-				Description: "Secret Key",
+				Description: "Secret key.",
 			},
 		},
 		Revoke: b.secretRootAccessKeyRevoke,
@@ -139,7 +139,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 
 	client, err := b.getClient(ctx, req.Storage)
 	if err != nil {
-		return b.responseFromErr("revoking root credentials", err)
+		return b.responseFromErr("revoking root user access key", err)
 	}
 
 	_, err = client.UpdateAccessKey(ctx, osc.UpdateAccessKeyRequest{
@@ -151,7 +151,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 		case osc.HasErrorCode(err, []string{"5076", "5099", "4000"}):
 		// AK expired or already deleted
 		default:
-			return b.responseFromErr("deactivating root credentials", err)
+			return b.responseFromErr("deactivating root user access key", err)
 		}
 	}
 
@@ -163,7 +163,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 		case osc.HasErrorCode(err, []string{"5076", "5099", "4000"}):
 		// AK expired or already deleted
 		default:
-			return b.responseFromErr("deleting root credentials", err)
+			return b.responseFromErr("deleting root user access key", err)
 		}
 	}
 
@@ -171,7 +171,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 }
 
 const (
-	pathRootCredsHelpDescription = ""
-	pathRootCredsHelpSynopsis    = ""
+	pathRootCredsHelpDescription = "Generates a leased access key owned by the OUTSCALE root user."
+	pathRootCredsHelpSynopsis    = "Generate a root user access key."
 	secretRootAccessKeyType      = "root_access_keys"
 )

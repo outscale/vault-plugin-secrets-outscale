@@ -208,33 +208,33 @@ func pathUserRole(b *backend) []*framework.Path {
 			Fields: map[string]*framework.FieldSchema{
 				"name": {
 					Type:        framework.TypeLowerCaseString,
-					Description: "Name of the role",
+					Description: "Unique name of the user role.",
 					Required:    true,
 				},
 				"user_group_names": {
 					Type:        framework.TypeStringSlice,
-					Description: "Groups name the EIM should be associated with this role. The user groups are defined in the EIM.",
+					Description: "Names of existing EIM user groups to which generated users are added.",
 					Required:    true,
 				},
 				"user_name_template": {
 					Type:        framework.TypeString,
-					Description: "User Name template for EIM user",
+					Description: "Template used to generate EIM usernames.",
 				},
 				"user_email_template": {
 					Type:        framework.TypeString,
-					Description: "User email template for EIM user",
+					Description: "Template used to generate the EIM user's email address.",
 				},
 				"path_template": {
 					Type:        framework.TypeString,
-					Description: "path template for EIM user",
+					Description: "Template used to generate the EIM user's path.",
 				},
 				"ttl": {
 					Type:        framework.TypeDurationSecond,
-					Description: "Default lease for generated credentials. If not set or set to 0, will use system default.",
+					Description: "Lease duration of EIM user access keys generated from this role.",
 				},
 				"max_ttl": {
 					Type:        framework.TypeDurationSecond,
-					Description: "Maximum time for role. If not set or set to 0, will use system default.",
+					Description: "Maximum lease duration of EIM user access keys generated from this role. Must not be less than ttl.",
 				},
 			},
 			Operations: map[logical.Operation]framework.OperationHandler{
@@ -269,8 +269,9 @@ func pathUserRole(b *backend) []*framework.Path {
 }
 
 const (
-	pathUserRoleHelpSynopsis        = "a"
-	pathUserRoleHelpDescription     = "aaaa"
-	pathUserRoleListHelpSynopsis    = "b"
-	pathUserRoleListHelpDescription = "bbbb"
+	pathUserRoleHelpSynopsis    = "Manage a user role."
+	pathUserRoleHelpDescription = `A user role is a Vault configuration used to generate EIM user access keys.`
+
+	pathUserRoleListHelpSynopsis    = "List the user roles configured in this secrets engine."
+	pathUserRoleListHelpDescription = "User roles are listed by name."
 )
