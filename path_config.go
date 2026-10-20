@@ -14,7 +14,7 @@ const (
 	configStoragePath = "config"
 )
 
-var errConfigNotSet = errors.New("root credentials configuration is not set")
+var errConfigNotSet = errors.New("plugin configuration access key is not set")
 
 func getConfig(ctx context.Context, s logical.Storage) (*profile.Profile, error) {
 	entry, err := s.Get(ctx, configStoragePath)
@@ -138,42 +138,40 @@ func pathConfig(b *backend) *framework.Path {
 	return &framework.Path{
 		Pattern: "config",
 		Fields: map[string]*framework.FieldSchema{
-			// TODO: put other fields for profile
 			"access_key": {
 				Type:        framework.TypeString,
-				Description: "Outscale API access key",
+				Description: "OUTSCALE API access key of the plugin configuration. It must belong to the OUTSCALE root user.",
 				Required:    true,
 				DisplayAttrs: &framework.DisplayAttributes{
-					Name:      "Access key",
-					Sensitive: true,
+					Name: "Access key",
 				},
 			},
 			"secret_key": {
 				Type:        framework.TypeString,
-				Description: "Outscale API secret key",
+				Description: "OUTSCALE API secret key of the plugin configuration.",
 				Required:    true,
 				DisplayAttrs: &framework.DisplayAttributes{
-					Name:      "Access key",
+					Name:      "Secret key",
 					Sensitive: true,
 				},
 			},
 			"region": {
 				Type:        framework.TypeString,
-				Description: "Outscale API region",
+				Description: "OUTSCALE API region.",
 				Default:     "eu-west-2",
 			},
 			"endpoint": {
 				Type:        framework.TypeString,
-				Description: "Outscale API Endpoint",
+				Description: "OUTSCALE API endpoint.",
 			},
 			"tls_skip_verify": {
 				Type:        framework.TypeBool,
-				Description: "Skip TLS verification (NOT RECOMMENDED)",
+				Description: "Disable TLS certificate verification. Not recommended for production used.",
 				Default:     false,
 			},
 			"protocol": {
 				Type:        framework.TypeString,
-				Description: "Protocol used to connect to the API. Can be 'http' or 'https'",
+				Description: "Protocol used for API requests. Supported values are \"http\" and \"https\".",
 				Default:     "https",
 			},
 		},
@@ -210,6 +208,9 @@ func (b *backend) pathConfigExistenceCheck(
 	return out != nil, nil
 }
 
-const pathConfigHelpSynopsis = "Configuration for Outscale backend."
+const pathConfigHelpSynopsis = "Configure the plugin configuration access key."
 
-const pathConfigHelpDescription = "need AK/SK, region default to eu-west-2"
+const pathConfigHelpDescription = `Configures the plugin configuration access key and connection settings. This
+access key is used by the plugin to call the OUTSCALE API. It must belong to
+the OUTSCALE root user.
+`

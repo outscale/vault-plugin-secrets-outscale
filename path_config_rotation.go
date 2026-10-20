@@ -14,10 +14,9 @@ const rootRotationStoragePath = "root-rotation-config"
 const (
 	rootRotationPeriodMin = 5 * time.Minute
 
-	pathConfigRotationHelpDesc = "This endpoint auto-rotates the root credentials periodically. This operation is irreversible and should be used with extreme caution."
-	pathConfigRotationHelpSyn  = "Auto-rotate the root credentials."
-
-	pathConfigRotationPattern = "config/rotation"
+	pathConfigRotationHelpDesc = "Controls periodic rotation of the plugin configuration access key. The rotation period must be at least five minutes and defaults to 30 days."
+	pathConfigRotationHelpSyn  = "Configure automatic plugin configuration access key rotation."
+	pathConfigRotationPattern  = "config/rotation"
 )
 
 type rootRotationConfig struct {
@@ -36,7 +35,7 @@ func pathConfigRootRotation(b *backend) *framework.Path {
 			},
 			"period": {
 				Type:        framework.TypeDurationSecond,
-				Description: "Time between root credential rotations",
+				Description: "Time between plugin configuration access key rotations. The minimum is five minutes; the default is 30 days.",
 				Default:     30 * 24 * 60 * 60, // 30 days
 			},
 		},
@@ -196,7 +195,7 @@ func (b *backend) periodicRootCredentialRotation(
 			return false, err
 		}
 		if config == nil {
-			b.Logger().Debug(pathConfigRotationPattern + ": root configuration is not set")
+			b.Logger().Debug(pathConfigRotationPattern + ": plugin configuration access key is not set")
 			return false, nil
 		}
 
