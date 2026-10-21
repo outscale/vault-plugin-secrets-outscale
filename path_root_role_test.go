@@ -39,7 +39,7 @@ func TestRootRoles(t *testing.T) {
 		resp, err := testRootRoleRead(t, b, s, testRootRoleName)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, float64(testRootTTL), resp.Data["ttl"])
+		require.InDelta(t, float64(testRootTTL), resp.Data["ttl"], 0)
 	})
 
 	t.Run("Update root role", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestRootRoles(t *testing.T) {
 		resp, err := testRootRoleRead(t, b, s, testRootRoleName)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, float64(3600), resp.Data["ttl"])
+		require.InDelta(t, float64(3600), resp.Data["ttl"], 0)
 	})
 
 	t.Run("Delete root role", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestRootRoleDefaultTTL(t *testing.T) {
 		resp, err := testRootRoleRead(t, b, s, "default-ttl-role")
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, float64(7200), resp.Data["ttl"])
+		require.InDelta(t, float64(7200), resp.Data["ttl"], 0)
 	})
 }
 

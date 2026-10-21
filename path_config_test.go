@@ -117,7 +117,7 @@ func testConfigRead(t *testing.T, b logical.Backend, s logical.Storage, expected
 	for k, expectedV := range expected {
 		actualV, ok := resp.Data[k]
 		if !ok {
-			assert.Fail(t, "expected key %s not found in response", k)
+			assert.Failf(t, "expected key not found in response", "key %s", k)
 		}
 		assert.Equal(t, expectedV, actualV, "key %s mismatch", k)
 	}

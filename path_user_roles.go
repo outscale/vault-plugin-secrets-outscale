@@ -2,6 +2,7 @@ package outscalevault
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,7 +37,7 @@ func (b *backend) getRole(
 	name string,
 ) (*outscaleRoleEntry, error) {
 	if name == "" {
-		return nil, fmt.Errorf("missing role name")
+		return nil, errors.New("missing role name")
 	}
 
 	entry, err := s.Get(ctx, "roles/"+name)
@@ -87,7 +88,7 @@ func setRole(
 	}
 
 	if entry == nil {
-		return fmt.Errorf("failed to create storage entry for role")
+		return errors.New("failed to create storage entry for role")
 	}
 
 	if err := s.Put(ctx, entry); err != nil {
