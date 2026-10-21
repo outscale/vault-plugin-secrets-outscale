@@ -102,10 +102,13 @@ func (b *backend) pathRolesWrite(ctx context.Context,
 	req *logical.Request,
 	d *framework.FieldData,
 ) (*logical.Response, error) {
-	name, ok := d.Get("name").(string)
-	if !ok {
-		return logical.ErrorResponse("missing name"), nil
+	createOperation := (req.Operation == logical.CreateOperation)
+	if createOperation {
+		if err := d.ValidateStrict(); err != nil {
+			return logical.ErrorResponse("%v", err), nil
+		}
 	}
+	name := d.Get("name").(string)
 
 	roleEntry, err := b.getRole(ctx, req.Storage, name)
 	if err != nil {
@@ -116,14 +119,7 @@ func (b *backend) pathRolesWrite(ctx context.Context,
 		roleEntry = &outscaleRoleEntry{}
 	}
 
-	createOperation := (req.Operation == logical.CreateOperation)
-
-	ugm, ok := d.Get("user_group_names").([]string)
-	if ok {
-		roleEntry.UserGroupNames = ugm
-	} else {
-		return logical.ErrorResponse("user_group_names must to defined"), nil
-	}
+	roleEntry.UserGroupNames = d.Get("user_group_names").([]string)
 
 	user_name_template, ok := d.Get("user_name_template").(string)
 	if ok && len(user_name_template) > 0 {

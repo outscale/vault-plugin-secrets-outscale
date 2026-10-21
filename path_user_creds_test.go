@@ -1,9 +1,12 @@
 package outscalevault
 
 import (
+	"context"
 	"testing"
 
+	"github.com/hashicorp/vault/sdk/helper/template"
 	"github.com/hashicorp/vault/sdk/logical"
+	"github.com/outscale/osc-sdk-go/v3/pkg/osc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,9 +34,23 @@ func TestAccUserCredsWithRole(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, env)
 
+	t.Run("Add config", func(t *testing.T) {
+		env.AddConfig(t)
+	})
+	client, err := env.Backend.(*backend).getClient(env.Context, env.Storage)
+	require.NoError(t, err)
+
+	groupTemplate, err := template.NewTemplate(template.Template("vault-test-{{random 20}}"))
+	require.NoError(t, err)
+	groupName, err := groupTemplate.Generate(nil)
+	require.NoError(t, err)
+	_, err = client.CreateUserGroup(env.Context, osc.CreateUserGroupRequest{UserGroupName: groupName})
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
+		ctx := context.WithoutCancel(t.Context())
 		for _, secret := range env.Secrets {
-			_, err := env.Backend.HandleRequest(env.Context, &logical.Request{
+			_, err := env.Backend.HandleRequest(ctx, &logical.Request{
 				Operation: logical.RevokeOperation,
 				Path:      "creds/cleanup",
 				Storage:   env.Storage,
@@ -43,10 +60,10 @@ func TestAccUserCredsWithRole(t *testing.T) {
 				t.Logf("failed to revoke secret: %v", err)
 			}
 		}
-	})
-
-	t.Run("Add config", func(t *testing.T) {
-		env.AddConfig(t)
+		_, err := client.DeleteUserGroup(ctx, osc.DeleteUserGroupRequest{UserGroupName: groupName})
+		if err != nil {
+			t.Errorf("failed to delete test user group: %v", err)
+		}
 	})
 
 	t.Run("Create user role", func(t *testing.T) {
@@ -55,8 +72,9 @@ func TestAccUserCredsWithRole(t *testing.T) {
 			Path:      "roles/" + testRoleName,
 			Storage:   env.Storage,
 			Data: map[string]any{
-				"ttl":     3600,
-				"max_ttl": 7200,
+				"user_group_names": []string{groupName},
+				"ttl":              3600,
+				"max_ttl":          7200,
 			},
 		})
 		require.NoError(t, err)
