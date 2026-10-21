@@ -149,7 +149,7 @@ func (b *backend) secretRootAccessKeyRevoke(
 
 	_, err = client.UpdateAccessKey(ctx, osc.UpdateAccessKeyRequest{
 		AccessKeyId: accessKey,
-		State:       "INACTIVE",
+		State:       new(string(osc.AccessKeyStateINACTIVE)),
 	})
 	if err != nil {
 		switch {

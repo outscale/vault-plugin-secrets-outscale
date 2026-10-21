@@ -1,13 +1,15 @@
 module github.com/outscale/vault-plugin-secrets-outscale
 
-go 1.26.0
+go 1.27.0
+
+toolchain go1.27.3
 
 require (
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/vault-testing-stepwise v0.3.4
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/hashicorp/vault/sdk v0.26.0
-	github.com/outscale/osc-sdk-go/v3 v3.0.0-beta.4.0.20260317144200-8238d9279533
+	github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.5
 	github.com/stretchr/testify v1.12.1
 )
 
@@ -20,7 +22,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
-	github.com/aws/smithy-go/aws-http-auth v1.1.2 // indirect
+	github.com/aws/smithy-go/aws-http-auth v1.2.1 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -89,7 +91,6 @@ require (
 	github.com/moby/sys/sequential v0.7.0 // indirect
 	github.com/moby/sys/user v0.4.1 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
-	github.com/oapi-codegen/runtime v1.2.0 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect

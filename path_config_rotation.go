@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
-	"github.com/outscale/osc-sdk-go/v3/pkg/profile"
 )
 
 const rootRotationStoragePath = "root-rotation-config"
@@ -173,7 +172,7 @@ func (b *backend) periodicRootCredentialRotation(
 		return nil
 	}
 	var rotationConfig *rootRotationConfig
-	var config *profile.Profile
+	var config *configEntry
 	var err error
 
 	check := func() (bool, error) {

@@ -101,7 +101,7 @@ func (b *backend) getClient(ctx context.Context, s logical.Storage) (*osc.Client
 		return nil, errConfigNotSet
 	}
 
-	b.client, err = osc.NewClient(config)
+	b.client, err = osc.NewClient(&config.Profile)
 	if err != nil {
 		return nil, err
 	}
