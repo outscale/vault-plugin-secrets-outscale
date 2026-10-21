@@ -40,7 +40,7 @@ Key features:
 
 - Vault or OpenBao
 - OUTSCALE API credentials
-- Go 1.25
+- Go 1.27
 
 ---
 

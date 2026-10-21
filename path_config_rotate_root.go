@@ -72,7 +72,7 @@ func (b *backend) rotateRootCredentialLocked(ctx context.Context, req *logical.R
 	cfg.AccessKey = *createAkSk.AccessKey.AccessKeyId
 	cfg.SecretKey = *createAkSk.AccessKey.SecretKey
 
-	newClient, err := osc.NewClient(cfg)
+	newClient, err := osc.NewClient(&cfg.Profile)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,6 @@ func (b *backend) rotateRootCredentialLocked(ctx context.Context, req *logical.R
 	if err != nil {
 		return err
 	}
-
 	if err := req.Storage.Put(ctx, entry); err != nil {
 		return err
 	}

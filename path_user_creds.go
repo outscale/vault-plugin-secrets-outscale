@@ -209,7 +209,7 @@ func (b *backend) secretUserAccessKeyRevoke(
 	for _, accessKey := range *readAccessKeysResponse.AccessKeys {
 		_, err := client.UpdateAccessKey(ctx, osc.UpdateAccessKeyRequest{
 			AccessKeyId: *accessKey.AccessKeyId,
-			State:       "INACTIVE",
+			State:       new(string(osc.AccessKeyStateINACTIVE)),
 			UserName:    &username,
 		})
 		if err != nil {
