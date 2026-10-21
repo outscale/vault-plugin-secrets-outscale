@@ -50,6 +50,8 @@ type testEnv struct {
 }
 
 func (e *testEnv) AddConfig(t *testing.T) {
+	t.Helper()
+
 	req := &logical.Request{
 		Operation: logical.CreateOperation,
 		Path:      "config",
@@ -62,22 +64,26 @@ func (e *testEnv) AddConfig(t *testing.T) {
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
 	require.Nil(t, resp)
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func (e *testEnv) ReadConfig(t *testing.T) *logical.Response {
+	t.Helper()
+
 	req := &logical.Request{
 		Operation: logical.ReadOperation,
 		Path:      "config",
 		Storage:   e.Storage,
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, resp)
 	return resp
 }
 
 func (e *testEnv) UpdateConfig(t *testing.T, data map[string]any) {
+	t.Helper()
+
 	req := &logical.Request{
 		Operation: logical.UpdateOperation,
 		Path:      "config",
@@ -86,10 +92,12 @@ func (e *testEnv) UpdateConfig(t *testing.T, data map[string]any) {
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
 	require.Nil(t, resp)
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func (e *testEnv) DeleteConfig(t *testing.T) {
+	t.Helper()
+
 	req := &logical.Request{
 		Operation: logical.DeleteOperation,
 		Path:      "config",
@@ -97,12 +105,10 @@ func (e *testEnv) DeleteConfig(t *testing.T) {
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
 	require.Nil(t, resp)
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
-func newAcceptanceTestEnv() (*testEnv, error) {
-	ctx := context.Background()
-
+func newAcceptanceTestEnv(ctx context.Context) (*testEnv, error) {
 	maxLease, _ := time.ParseDuration("60s")
 	defaultLease, _ := time.ParseDuration("30s")
 	conf := &logical.BackendConfig{

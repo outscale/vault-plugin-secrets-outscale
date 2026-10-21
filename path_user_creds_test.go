@@ -27,7 +27,7 @@ func TestAccUserCredsWithRole(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless VAULT_ACC=1 is set")
 	}
 
-	env, err := newAcceptanceTestEnv()
+	env, err := newAcceptanceTestEnv(t.Context())
 	require.NoError(t, err)
 	require.NotNil(t, env)
 

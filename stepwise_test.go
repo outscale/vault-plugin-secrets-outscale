@@ -41,6 +41,8 @@ func TestStepwise(t *testing.T) {
 var initSetup sync.Once
 
 func testAccPreCheck(t *testing.T) {
+	t.Helper()
+
 	if os.Getenv("VAULT_ACC") != "1" {
 		t.Skip("Acceptance tests skipped unless VAULT_ACC=1 is set")
 	}
@@ -59,6 +61,8 @@ func testAccPreCheck(t *testing.T) {
 }
 
 func testAccConfig(t *testing.T) stepwise.Step {
+	t.Helper()
+
 	return stepwise.Step{
 		Operation: stepwise.UpdateOperation,
 		Path:      "config",
@@ -71,6 +75,8 @@ func testAccConfig(t *testing.T) stepwise.Step {
 }
 
 func testAccUserRole(t *testing.T, roleName string) stepwise.Step {
+	t.Helper()
+
 	return stepwise.Step{
 		Operation: stepwise.UpdateOperation,
 		Path:      "roles/" + roleName,
@@ -80,13 +86,15 @@ func testAccUserRole(t *testing.T, roleName string) stepwise.Step {
 		},
 		Assert: func(resp *api.Secret, err error) error {
 			require.Nil(t, resp)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			return nil
 		},
 	}
 }
 
 func testAccUserRoleRead(t *testing.T, roleName string) stepwise.Step {
+	t.Helper()
+
 	return stepwise.Step{
 		Operation: stepwise.ReadOperation,
 		Path:      "roles/" + roleName,
@@ -102,6 +110,8 @@ func testAccUserCredRead(
 	roleName string,
 	accessKey, secretKey *string,
 ) stepwise.Step {
+	t.Helper()
+
 	return stepwise.Step{
 		Operation: stepwise.ReadOperation,
 		Path:      "creds/" + roleName,

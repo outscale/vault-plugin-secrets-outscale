@@ -2,6 +2,7 @@ package outscalevault
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -25,9 +26,13 @@ func pathRootCreds(b *backend) *framework.Path {
 				Description: "Lease duration for the root user access key. If omitted, the root role's TTL is used.",
 			},
 		},
-		Callbacks: map[logical.Operation]framework.OperationFunc{
-			logical.ReadOperation:   b.pathRootCredsRead,
-			logical.UpdateOperation: b.pathRootCredsRead,
+		Operations: map[logical.Operation]framework.OperationHandler{
+			logical.ReadOperation: &framework.PathOperation{
+				Callback: b.pathRootCredsRead,
+			},
+			logical.UpdateOperation: &framework.PathOperation{
+				Callback: b.pathRootCredsRead,
+			},
 		},
 		HelpSynopsis:    pathRootCredsHelpSynopsis,
 		HelpDescription: pathRootCredsHelpDescription,
@@ -43,7 +48,7 @@ func (b *backend) pathRootCredsRead(
 
 	roleEntry, err := b.getRootRole(ctx, req.Storage, roleName)
 	if err != nil {
-		return nil, fmt.Errorf("error retriving role: %w", err)
+		return nil, fmt.Errorf("error retrieving role: %w", err)
 	}
 
 	if roleEntry == nil {
@@ -78,7 +83,7 @@ func (b *backend) createRootCreds(
 		ttl = ttlOverride
 	}
 
-	tag := fmt.Sprintf("vault:root-creds/%s", roleName)
+	tag := "vault:root-creds/" + roleName
 	// Expiration date is set to TTL + 1 minute to let Vault revoke the access key before expiration
 	createAccessKey, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{
 		ExpirationDate: &iso8601.Time{Time: time.Now().Add(ttl).Add(time.Minute)},
@@ -127,11 +132,11 @@ func (b *backend) secretRootAccessKeyRevoke(
 	// Get the access key from the internal data
 	akRaw, ok := req.Secret.InternalData["access_key"]
 	if !ok {
-		return nil, fmt.Errorf("secret is missing username internal data")
+		return nil, errors.New("secret is missing access_key internal data")
 	}
 	accessKey, ok := akRaw.(string)
 	if !ok {
-		return nil, fmt.Errorf("secret is missing username internal data")
+		return nil, errors.New("secret is missing access_key internal data")
 	}
 
 	b.lock.RLock()
