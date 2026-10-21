@@ -2,6 +2,7 @@ package outscalevault
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,9 +23,13 @@ func pathUserCreds(b *backend) *framework.Path {
 				Required:    true,
 			},
 		},
-		Callbacks: map[logical.Operation]framework.OperationFunc{
-			logical.ReadOperation:   b.pathUserCredsRead,
-			logical.UpdateOperation: b.pathUserCredsRead,
+		Operations: map[logical.Operation]framework.OperationHandler{
+			logical.ReadOperation: &framework.PathOperation{
+				Callback: b.pathUserCredsRead,
+			},
+			logical.UpdateOperation: &framework.PathOperation{
+				Callback: b.pathUserCredsRead,
+			},
 		},
 		HelpSynopsis:    pathUserCredsHelpSynopsis,
 		HelpDescription: pathUserCredsHelpDescription,
@@ -40,7 +45,7 @@ func (b *backend) pathUserCredsRead(
 
 	roleEntry, err := b.getRole(ctx, req.Storage, roleName)
 	if err != nil {
-		return nil, fmt.Errorf("error retriving role: %w", err)
+		return nil, fmt.Errorf("error retrieving role: %w", err)
 	}
 
 	if roleEntry == nil {
@@ -122,7 +127,7 @@ func (b *backend) createUserCreds(
 		}
 	}
 
-	tag := fmt.Sprintf("vault:creds/%s", roleName)
+	tag := "vault:creds/" + roleName
 	createAccessKey, err := client.CreateAccessKey(ctx, osc.CreateAccessKeyRequest{
 		UserName:       createUserResponse.User.UserName,
 		ExpirationDate: &iso8601.Time{Time: time.Now().Add(roleEntry.TTL)},
@@ -179,11 +184,11 @@ func (b *backend) secretUserAccessKeyRevoke(
 	// Get the username from the internal data
 	usernameRaw, ok := req.Secret.InternalData["username"]
 	if !ok {
-		return nil, fmt.Errorf("secret is missing username internal data")
+		return nil, errors.New("secret is missing username internal data")
 	}
 	username, ok := usernameRaw.(string)
 	if !ok {
-		return nil, fmt.Errorf("secret is missing username internal data")
+		return nil, errors.New("secret is missing username internal data")
 	}
 
 	b.lock.RLock()

@@ -42,8 +42,8 @@ func TestUserRoles(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, []string{"test-group"}, resp.Data["user_group_names"])
-		require.Equal(t, float64(testTTL), resp.Data["ttl"])
-		require.Equal(t, float64(testMaxTTL), resp.Data["max_ttl"])
+		require.InDelta(t, float64(testTTL), resp.Data["ttl"], 0)
+		require.InDelta(t, float64(testMaxTTL), resp.Data["max_ttl"], 0)
 	})
 
 	t.Run("Update user role", func(t *testing.T) {
@@ -61,8 +61,8 @@ func TestUserRoles(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, []string{"updated-group"}, resp.Data["user_group_names"])
-		require.Equal(t, float64(180), resp.Data["ttl"])
-		require.Equal(t, float64(7200), resp.Data["max_ttl"])
+		require.InDelta(t, float64(180), resp.Data["ttl"], 0)
+		require.InDelta(t, float64(7200), resp.Data["max_ttl"], 0)
 	})
 
 	t.Run("Delete user role", func(t *testing.T) {

@@ -2,6 +2,7 @@ package outscalevault
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -137,7 +138,7 @@ func setRootRole(ctx context.Context, s logical.Storage, name string, roleEntry 
 	}
 
 	if entry == nil {
-		return fmt.Errorf("failed to create storage entry for root role")
+		return errors.New("failed to create storage entry for root role")
 	}
 
 	if err := s.Put(ctx, entry); err != nil {
@@ -149,7 +150,7 @@ func setRootRole(ctx context.Context, s logical.Storage, name string, roleEntry 
 
 func (b *backend) getRootRole(ctx context.Context, s logical.Storage, name string) (*outscaleRootRoleEntry, error) {
 	if name == "" {
-		return nil, fmt.Errorf("missing root-role name")
+		return nil, errors.New("missing root-role name")
 	}
 
 	entry, err := s.Get(ctx, "root-role/"+name)
