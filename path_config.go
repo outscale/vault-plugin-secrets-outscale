@@ -7,16 +7,20 @@ import (
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
+	"github.com/outscale/osc-sdk-go/v3/pkg/osc"
 	"github.com/outscale/osc-sdk-go/v3/pkg/profile"
 )
 
-const (
-	configStoragePath = "config"
-)
+const configStoragePath = "config"
 
 var errConfigNotSet = errors.New("plugin configuration access key is not set")
 
-func getConfig(ctx context.Context, s logical.Storage) (*profile.Profile, error) {
+type configEntry struct {
+	profile.Profile
+	AccountID string `json:"account_id,omitempty"`
+}
+
+func getConfig(ctx context.Context, s logical.Storage) (*configEntry, error) {
 	entry, err := s.Get(ctx, configStoragePath)
 	if err != nil {
 		return nil, err
@@ -26,9 +30,9 @@ func getConfig(ctx context.Context, s logical.Storage) (*profile.Profile, error)
 		return nil, nil
 	}
 
-	config := new(profile.Profile)
-	if err := entry.DecodeJSON(&config); err != nil {
-		return nil, fmt.Errorf("error reading root config: %w", err)
+	config := new(configEntry)
+	if err := entry.DecodeJSON(config); err != nil {
+		return nil, fmt.Errorf("error reading plugin config: %w", err)
 	}
 
 	return config, nil
@@ -50,6 +54,7 @@ func (b *backend) pathConfigRead(
 
 	return &logical.Response{
 		Data: map[string]any{
+			"account_id":      config.AccountID,
 			"region":          config.Region,
 			"tls_skip_verify": config.TlsSkipVerify,
 			"endpoint":        config.Endpoints.API,
@@ -77,7 +82,7 @@ func (b *backend) pathConfigWrite(
 		if !createOperation {
 			return logical.ErrorResponse("config not found during update operation"), nil
 		}
-		config = new(profile.Profile)
+		config = new(configEntry)
 	}
 
 	if access_key, ok := data.GetOk("access_key"); ok {
@@ -100,14 +105,29 @@ func (b *backend) pathConfigWrite(
 		config.Endpoints.API = endpoint.(string)
 	}
 
-	config.Region = data.Get("region").(string)
-	config.Protocol = data.Get("protocol").(string)
+	// Because of defaults we need to check the value to ensure it does not get overridden on a partial write/update
+	if _, ok := data.GetOk("region"); ok || createOperation {
+		config.Region = data.Get("region").(string)
+	}
+	if _, ok := data.GetOk("protocol"); ok || createOperation {
+		config.Protocol = data.Get("protocol").(string)
+	}
+
+	client, err := osc.NewClient(&config.Profile)
+	if err != nil {
+		return b.responseFromErr("validating plugin configuration", err)
+	}
+
+	accounts, err := client.ReadAccounts(ctx, osc.ReadAccountsRequest{})
+	if err != nil {
+		return b.responseFromErr("validating plugin configuration", err)
+	}
+	config.AccountID = *(*accounts.Accounts)[0].AccountId
 
 	entry, err := logical.StorageEntryJSON(configStoragePath, config)
 	if err != nil {
 		return nil, err
 	}
-
 	if err := req.Storage.Put(ctx, entry); err != nil {
 		return nil, err
 	}
@@ -126,7 +146,6 @@ func (b *backend) pathConfigDelete(
 	defer b.lock.Unlock()
 
 	err := req.Storage.Delete(ctx, configStoragePath)
-
 	if err == nil {
 		b.reset()
 	}
@@ -170,9 +189,10 @@ func pathConfig(b *backend) *framework.Path {
 				Default:     false,
 			},
 			"protocol": {
-				Type:        framework.TypeString,
-				Description: "Protocol used for API requests. Supported values are \"http\" and \"https\".",
-				Default:     "https",
+				Type:          framework.TypeString,
+				Description:   "Protocol used for API requests. Supported values are \"http\" and \"https\".",
+				Default:       "https",
+				AllowedValues: []any{"http", "https"},
 			},
 		},
 		Operations: map[logical.Operation]framework.OperationHandler{
