@@ -93,12 +93,12 @@ func (b *backend) pathRootRolesRead(ctx context.Context, req *logical.Request, d
 }
 
 func (b *backend) pathRootRolesWrite(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
-	name, ok := d.GetOk("name")
-	if !ok {
-		return logical.ErrorResponse("missing name"), nil
+	if err := d.ValidateStrict(); err != nil {
+		return logical.ErrorResponse("%v", err), nil
 	}
+	name := d.Get("name").(string)
 
-	roleEntry, err := b.getRootRole(ctx, req.Storage, name.(string))
+	roleEntry, err := b.getRootRole(ctx, req.Storage, name)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (b *backend) pathRootRolesWrite(ctx context.Context, req *logical.Request, 
 		roleEntry.TTL = time.Duration(d.Get("ttl").(int)) * time.Second
 	}
 
-	if err := setRootRole(ctx, req.Storage, name.(string), roleEntry); err != nil {
+	if err := setRootRole(ctx, req.Storage, name, roleEntry); err != nil {
 		return nil, err
 	}
 

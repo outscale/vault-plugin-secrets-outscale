@@ -77,6 +77,11 @@ func (b *backend) pathConfigWrite(
 	}
 
 	createOperation := (req.Operation == logical.CreateOperation)
+	if createOperation {
+		if err := data.ValidateStrict(); err != nil {
+			return logical.ErrorResponse("%v", err), nil
+		}
+	}
 
 	if config == nil {
 		if !createOperation {
@@ -87,14 +92,10 @@ func (b *backend) pathConfigWrite(
 
 	if access_key, ok := data.GetOk("access_key"); ok {
 		config.AccessKey = access_key.(string)
-	} else if !ok && createOperation {
-		return logical.ErrorResponse("missing access_key in configuration"), nil
 	}
 
 	if secret_key, ok := data.GetOk("secret_key"); ok {
 		config.SecretKey = secret_key.(string)
-	} else if !ok && createOperation {
-		return logical.ErrorResponse("missing secret_key in configuration"), nil
 	}
 
 	if tls_skip_verify, ok := data.GetOk("tls_skip_verify"); ok {

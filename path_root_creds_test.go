@@ -1,6 +1,7 @@
 package outscalevault
 
 import (
+	"context"
 	"testing"
 
 	"github.com/hashicorp/vault/sdk/logical"
@@ -32,8 +33,9 @@ func TestAccRootCredsWithRole(t *testing.T) {
 	require.NotNil(t, env)
 
 	t.Cleanup(func() {
+		ctx := context.WithoutCancel(t.Context())
 		for _, secret := range env.Secrets {
-			_, err := env.Backend.HandleRequest(env.Context, &logical.Request{
+			_, err := env.Backend.HandleRequest(ctx, &logical.Request{
 				Operation: logical.RevokeOperation,
 				Path:      "root-creds/cleanup",
 				Storage:   env.Storage,
