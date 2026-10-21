@@ -13,7 +13,7 @@ func TestConfig(t *testing.T) {
 
 	t.Run("Create without secret key", func(t *testing.T) {
 		err := testConfigCreate(t, b, storage, map[string]any{"access_key": "test-access-key"})
-		require.ErrorContains(t, err, "missing secret_key in configuration")
+		require.ErrorContains(t, err, `missing required field "secret_key"`)
 	})
 	t.Run("Update missing config", func(t *testing.T) {
 		require.Error(t, testConfigUpdate(t, b, storage, map[string]any{"region": "us-east-1"}))
