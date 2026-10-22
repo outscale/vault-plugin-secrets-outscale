@@ -13,6 +13,8 @@ require (
 	github.com/stretchr/testify v1.12.1
 )
 
+replace github.com/hashicorp/vault-testing-stepwise v0.3.4 => github.com/outscale/vault-testing-stepwise v0.0.0-20261022114745-333327fb5dc4
+
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
