@@ -3,10 +3,6 @@ name: Check build & lint
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "**.go"
-      - "go.*"
-      - ".github/workflows/build.yml"
 
 permissions:
   contents: read
@@ -17,12 +13,59 @@ jobs:
     steps:
       - name: ⬇️ Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - name: ⬇️ Install Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: "./go.mod"
+
       - name: 🔎 golangci-lint
         uses: outscale/goutils/.github/actions/lint@8372c6326b23c047417d312b859f9a0cf19b3ed9 # v1.0.3
-      - name: 🔎 Run make build
+
+      - name: 🔎 Build Go package
         run: go build
         shell: bash
+
+  image:
+    name: OCI images
+    runs-on: ubuntu-24.04
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⬇️ Install Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: "./go.mod"
+
+      - name: ⬇️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: 🐳 Build local plugin images
+        uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
+        with:
+          version: 'v2.18.0'
+          args: release --snapshot --clean
+
+      - name: 🔧 Set Vault Docker access
+        run: |
+          echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> "$GITHUB_ENV"
+          sudo install -d -m 1777 /tmp/vault-plugin
+
+      - name: 🚀 Start Vault
+        run: docker compose -f docker/compose.yml up --wait --wait-timeout 60
+
+      - name: 🔎 Test OCI Plugin
+        run: go test -v -count=1 -tags=oci ./docker
+
+      - name: 📝 Vault logs on failure
+        if: failure() && env.DOCKER_GID != ''
+        run: docker compose -f docker/compose.yml logs --no-color vault
+
+      - name: 🛑 Stop Vault
+        if: always() && env.DOCKER_GID != ''
+        run: docker compose -f docker/compose.yml down --volumes
