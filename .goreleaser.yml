@@ -29,6 +29,15 @@ builds:
       goarch: '386'
   main: ./cmd/vault-plugin-secrets-outscale/main.go
 
+dockers_v2:
+  - images:
+      - vault-plugin-secrets-outscale
+    dockerfile: docker/Dockerfile
+    tags:
+      - test
+    # We skip publishing for now
+    disable: '{{ not .IsSnapshot }}'
+
 archives:
 - formats: [zip]
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'

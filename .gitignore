@@ -1,3 +1,5 @@
 vaultplg*
 vault-plugin-secrets-outscale
 dist/
+
+.zed
