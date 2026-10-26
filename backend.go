@@ -29,7 +29,8 @@ func Backend() *backend {
 	b := backend{}
 
 	b.Backend = &framework.Backend{
-		Help: strings.TrimSpace(backendHelp),
+		RunningVersion: Version,
+		Help:           strings.TrimSpace(backendHelp),
 		PathsSpecial: &logical.Paths{
 			LocalStorage: []string{},
 			SealWrapStorage: []string{

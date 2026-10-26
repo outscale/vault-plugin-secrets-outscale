@@ -11,7 +11,7 @@ builds:
   flags:
     - -trimpath
   ldflags:
-    - '-s -w -X {{ .ModulePath }}/version.version={{.Version}}'
+    - '-s -w -X {{ .ModulePath }}.Version=v{{ .Version }}'
   goos:
     - windows
     - linux
@@ -31,20 +31,34 @@ builds:
 
 dockers_v2:
   - images:
-      - vault-plugin-secrets-outscale
+      - ghcr.io/outscale/vault-plugin-secrets-outscale
     dockerfile: docker/Dockerfile
     tags:
-      - test
-    # We skip publishing for now
-    disable: '{{ not .IsSnapshot }}'
+      - "{{ .Version }}"
+      - "{{ if not .IsNightly }}latest{{ end }}"
+
+signs:
+  - cmd: cosign
+    signature: "${artifact}.sigstore.json"
+    args:
+      - "sign-blob"
+      - "--bundle=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+    output: true
+
+docker_signs:
+  - cmd: cosign
+    args:
+      - "sign"
+      - "${artifact}@${digest}"
+      - "--yes"
+    output: true
 
 archives:
 - formats: [zip]
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-
-checksum:
-  name_template: "checksums.txt"
-  algorithm: sha256
 
 release:
   draft: true
