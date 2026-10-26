@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	pluginRepository = "vault-plugin-secrets-outscale"
+	pluginRepository = "ghcr.io/outscale/vault-plugin-secrets-outscale"
 	pluginName       = "vault-plugin-secrets-outscale"
 
 	vaultAddr  = "http://127.0.0.1:8200"
@@ -26,7 +26,7 @@ const (
 func TestOCIPluginMount(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 	defer cancel()
-	pluginImage := pluginRepository + ":test-" + runtime.GOARCH
+	pluginImage := pluginRepository + ":latest-" + runtime.GOARCH
 
 	dockerClient, err := client.New(client.FromEnv)
 	require.NoError(t, err)
@@ -37,6 +37,20 @@ func TestOCIPluginMount(t *testing.T) {
 	image, err := dockerClient.ImageInspect(ctx, pluginImage)
 	require.NoError(t, err, "plugin not foud")
 	require.NotEmpty(t, image.ID)
+
+	for _, tag := range image.RepoTags {
+		if tag == pluginImage {
+			continue
+		}
+
+		// docker_v2 appends the runtime architecture as a tag to every image built during goreleaser snapshot
+		// vault tries to mount the image based on the plugin version (which does not contain the architecture)
+		_, err = dockerClient.ImageTag(ctx, client.ImageTagOptions{
+			Source: image.ID,
+			Target: strings.TrimSuffix(tag, "-"+runtime.GOARCH),
+		})
+		require.NoError(t, err)
+	}
 
 	config := api.DefaultConfig()
 	config.Address = vaultAddr

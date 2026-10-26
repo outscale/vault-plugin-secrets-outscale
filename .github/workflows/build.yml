@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   build:
@@ -37,7 +38,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: ⬇️ Install Go
+      - name: ⬇️ Set up Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: ⬇️ Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: "./go.mod"
@@ -48,7 +52,7 @@ jobs:
       - name: 🐳 Build local plugin images
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
         with:
-          version: 'v2.18.0'
+          version: v2.19.0
           args: release --snapshot --clean
 
       - name: 🔧 Set Vault Docker access
