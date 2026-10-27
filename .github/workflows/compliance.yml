@@ -18,4 +18,4 @@ jobs:
     - name: Plumber
       uses: outscale/.github/pipeline-compliance@82a9889d98a317d5ef844026429dbc8827f306f2 # v1.2.1
       with:
-        github-token: ${{ secrets.PLUMBER_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
