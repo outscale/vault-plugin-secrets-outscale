@@ -17,6 +17,8 @@
 - [Overview](#-overview)
 - [Requirements](#-requirements)
 - [Installation](#-installation)
+  - [Binary installation](#binary-installation)
+  - [OCI image installation](#oci-image-installation)
 - [Configuration](#-configuration)
 - [Usage](#usage)
 - [License](#-license)
@@ -46,11 +48,33 @@ Key features:
 
 ## ⚙ Installation
 
-### Option 1: Download the latest release
+### Binary installation
 
-Download the archive for your operating system and architecture from the [Releases page](https://github.com/outscale/vault-plugin-secrets-outscale/releases).
+#### Option 1: Download a release
 
-### Option 2: Build from source
+Download the archive for your operating system and architecture, the release's `*_checksums.txt` file, and its `*_checksums.txt.sigstore.json` bundle from the same release on the [Releases page](https://github.com/outscale/vault-plugin-secrets-outscale/releases).
+
+Set `VERSION` to the downloaded release version and verify the checksum file with [Cosign](https://docs.sigstore.dev/cosign/system_config/installation/):
+
+```bash
+VERSION=0.0.2
+CHECKSUMS="vault-plugin-secrets-outscale_${VERSION}_checksums.txt"
+
+cosign verify-blob "$CHECKSUMS" \
+  --bundle="${CHECKSUMS}.sigstore.json" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  --certificate-identity="https://github.com/outscale/vault-plugin-secrets-outscale/.github/workflows/release.yml@refs/tags/v${VERSION}"
+```
+
+After signature verification succeeds, check the downloaded archive from the directory containing the downloaded files:
+
+```bash
+sha256sum -c --ignore-missing "$CHECKSUMS"
+```
+
+Extract the archive, then follow [Install and register the binary](#install-and-register-the-binary).
+
+#### Option 2: Build from source
 
 ```bash
 git clone https://github.com/outscale/vault-plugin-secrets-outscale.git
@@ -75,7 +99,11 @@ goreleaser build \
   --output vault-plugin-secrets-outscale
 ```
 
-Set `PLUGIN_DIR` to the `plugin_directory` configured in Vault or OpenBao.
+Continue with [Install and register the binary](#install-and-register-the-binary).
+
+#### Install and register the binary
+
+Set `PLUGIN_DIR` to the `plugin_directory` configured in Vault or OpenBao:
 
 ```bash
 PLUGIN_DIR=/path/to/plugin-directory
@@ -87,6 +115,45 @@ vault plugin register \
   -command=vault-plugin-secrets-outscale \
   secret vault-plugin-secrets-outscale
 ```
+
+Continue with [Configuration](#-configuration) to enable and configure the plugin.
+
+### OCI image installation
+
+Release images are available at [ghcr.io/outscale/vault-plugin-secrets-outscale](https://github.com/outscale/vault-plugin-secrets-outscale/pkgs/container/vault-plugin-secrets-outscale) for Linux `amd64` and `arm64`.
+
+Follow HashiCorp’s [containerized plugin guide](https://developer.hashicorp.com/vault/docs/plugins/containerized-plugins/add-a-containerized-plugin) to prepare Vault and configure the container runtime.
+
+Choose a released version and pull it into the Docker daemon used by Vault:
+
+```bash
+VERSION=0.0.2
+IMAGE=ghcr.io/outscale/vault-plugin-secrets-outscale
+
+docker pull "$IMAGE:$VERSION"
+```
+
+Verify the image with [Cosign](https://docs.sigstore.dev/cosign/system_config/installation/):
+
+```bash
+cosign verify "$IMAGE:$VERSION" \
+  --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+  --certificate-identity="https://github.com/outscale/vault-plugin-secrets-outscale/.github/workflows/release.yml@refs/tags/v${VERSION}"
+```
+
+Register the plugin:
+
+```bash
+PLUGIN_SHA256=$(docker image inspect --format '{{.Id}}' "$IMAGE:$VERSION" | cut -d: -f2)
+
+vault plugin register \
+  -sha256="$PLUGIN_SHA256" \
+  -oci_image="$IMAGE" \
+  -version="v$VERSION" \
+  secret vault-plugin-secrets-outscale
+```
+
+Continue with [Configuration](#-configuration) to enable and configure the plugin.
 
 ---
 
