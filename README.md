@@ -252,7 +252,7 @@ vault write outscale/config/rotation enabled=false
 
 Vault Outscale Secrets Plugin is released under the BSD 3-Clause license.
 
-© 2025 Outscale SAS
+© 2026 Outscale SAS
 
 See [LICENSE](./LICENSE) for full details.
 
