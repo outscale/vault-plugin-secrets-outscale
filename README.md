@@ -57,7 +57,7 @@ Download the archive for your operating system and architecture, the release's `
 Set `VERSION` to the downloaded release version and verify the checksum file with [Cosign](https://docs.sigstore.dev/cosign/system_config/installation/):
 
 ```bash
-VERSION=0.0.2
+VERSION=0.1.0
 CHECKSUMS="vault-plugin-secrets-outscale_${VERSION}_checksums.txt"
 
 cosign verify-blob "$CHECKSUMS" \
@@ -127,7 +127,7 @@ Follow HashiCorp’s [containerized plugin guide](https://developer.hashicorp.co
 Choose a released version and pull it into the Docker daemon used by Vault:
 
 ```bash
-VERSION=0.0.2
+VERSION=0.1.0
 IMAGE=ghcr.io/outscale/vault-plugin-secrets-outscale
 
 docker pull "$IMAGE:$VERSION"
