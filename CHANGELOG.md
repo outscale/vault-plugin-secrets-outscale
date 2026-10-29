@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.0] - 2026-10-29
+
+### 📝 Documentation
+* 📝 docs(readme): plugin install & oci image by @ryohkhn in https://github.com/outscale/vault-plugin-secrets-outscale/pull/33
+### 📦 Dependency updates
+* ⬆️ deps(docker-compose): pin hashicorp/vault docker tag to e0acd3c by @Open-Source-Bot in https://github.com/outscale/vault-plugin-secrets-outscale/pull/30
+
 ## [0.0.2] - 2026-10-27
 
 ### 🛠️ Changed / Refactoring
