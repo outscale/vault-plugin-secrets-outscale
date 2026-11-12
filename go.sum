@@ -274,6 +274,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.5 h1:XP6smAeoacHJT/mTeNBMc9Y2Dqvw0fSgLOyazQN6gIY=
 github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.5/go.mod h1:wtvvgi27yvHluLy4X575C1wQQORNpi8FTYcxxvCPi7M=
+github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.6 h1:JK9OB5OonPbHCQD+S9O6MMOO1JqXzMKgqScRt2XEkwA=
+github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.6/go.mod h1:7JsbCkpWIa7+MlvxyAv2HZf+CaJcZDyKekBuiDF4BIY=
 github.com/outscale/vault-testing-stepwise v0.0.0-20261022114745-333327fb5dc4 h1:yhPybhEltHTxsCrZMYg5MAIlrL6iavw7Cfz932yfC1I=
 github.com/outscale/vault-testing-stepwise v0.0.0-20261022114745-333327fb5dc4/go.mod h1:pvd92mdMPQMvmDVUmWRWKWyp5Q16ckDF0Mu+qGLcCFQ=
 github.com/pascaldekloe/goe v0.1.0 h1:cBOtyMzM9HTpWjXfbbunk26uA6nG3a8n06Wieeh0MwY=

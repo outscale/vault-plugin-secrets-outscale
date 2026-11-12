@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/hashicorp/vault/sdk v0.26.0
 	github.com/moby/moby/client v0.6.0
-	github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.5
+	github.com/outscale/osc-sdk-go/v3 v3.0.0-rc.6
 	github.com/stretchr/testify v1.12.1
 )
 
